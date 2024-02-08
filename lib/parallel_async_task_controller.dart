@@ -81,7 +81,7 @@ class ParallelAsyncTaskController<R> {
     _currentTasks.removeWhere((element) => element.isCompleted);
     if (_currentTasks.isEmpty && _taskQueue.isEmpty) {
       _completer?.complete();
-      _completer = Completer<void>();
+      _completer = null;
     }else {
       _startTasksIfPossible();
     }
