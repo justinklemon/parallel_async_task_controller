@@ -11,6 +11,7 @@ class ParallelAsyncTaskController<R> {
   int _concurrentLimit;
   final Queue<AsyncTask<R>> _taskQueue = Queue();
   final List<AsyncTask<R>> _currentTasks = [];
+  Completer<void>? _completer;
 
   ParallelAsyncTaskController({required int concurrentLimit})
       : _concurrentLimit = concurrentLimit,
@@ -65,6 +66,9 @@ class ParallelAsyncTaskController<R> {
 
   /// Starts tasks if there are less than the maximum number of running tasks and there are tasks in the queue.
   void _startTasksIfPossible() {
+    if (_completer == null && _taskQueue.isNotEmpty) {
+      _completer = Completer<void>();
+    }
     while (_currentTasks.length < _concurrentLimit && _taskQueue.isNotEmpty) {
       final task = _taskQueue.removeFirst();
       _currentTasks.add(task);
@@ -75,6 +79,22 @@ class ParallelAsyncTaskController<R> {
   /// Removes completed tasks from the list of running tasks and starts more tasks if possible.
   void _onTaskComplete() {
     _currentTasks.removeWhere((element) => element.isCompleted);
-    _startTasksIfPossible();
+    if (_currentTasks.isEmpty && _taskQueue.isEmpty) {
+      _completer?.complete();
+      _completer = Completer<void>();
+    }else {
+      _startTasksIfPossible();
+    }
+  }
+
+  /// A Future that completes when all tasks have completed.
+  /// If there are no tasks, the Future completes immediately.
+  Future<void> get allTasksComplete async => _completer?.future;
+
+  /// Cancels all tasks that are not running.
+  /// Returns a Future that completes when all tasks have been canceled and all running tasks have completed.
+  Future<void> cancelAllTasks() async {
+    _taskQueue.clear();
+    return allTasksComplete;
   }
 }

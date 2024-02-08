@@ -105,4 +105,27 @@ void main() {
     await Future.wait([task3, task4]);
     expect(results, equals([4,3])); // Since we raised the concurrent limit to 2, task4 should complete before task3
   });
+
+  test('cancel tasks ',()async {
+    final taskController = ParallelAsyncTaskController<int>(concurrentLimit: 2);
+    final results = <int>[];
+    final task1 = taskController.addTask(() async {
+      await Future.delayed(const Duration(seconds: 3));
+      return 1;
+    });
+    final task2 = taskController.addTask(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      return 2;
+    });
+    final task3 = taskController.addTask(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      return 3;
+    });
+    task1.then((value) => results.add(value));
+    task2.then((value) => results.add(value));
+    task3.then((value) => results.add(value));
+    await taskController.cancelAllTasks();
+    expect(results, equals([2,1]));
+
+  });
 }
