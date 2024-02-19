@@ -19,7 +19,7 @@ class ParallelAsyncTaskController<T, R> {
 
   ParallelAsyncTaskController({
     required int maxParallelTasks,
-    required List<T> items,
+    required Iterable<T> items,
     required Future<R> Function(T) task,
     bool broadcast = false,
   })  : _maxParallelTasks = maxParallelTasks,
@@ -29,6 +29,23 @@ class ParallelAsyncTaskController<T, R> {
             broadcast ? StreamController.broadcast() : StreamController(),
         assert(maxParallelTasks > 0) {
     _startTasksIfPossible();
+  }
+
+  ParallelAsyncTaskController.future({
+    required int maxParallelTasks,
+    required Future<Iterable<T>> items,
+    required Future<R> Function(T) task,
+    bool broadcast = false,
+  })  : _maxParallelTasks = maxParallelTasks,
+        _task = task,
+        _items = Queue(),
+        _resultsController =
+            broadcast ? StreamController.broadcast() : StreamController(),
+        assert(maxParallelTasks > 0) {
+    items.then((list) {
+      _items.addAll(list);
+      _startTasksIfPossible();
+    });
   }
 
   void _startTasksIfPossible() {
