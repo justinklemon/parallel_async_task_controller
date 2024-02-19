@@ -127,7 +127,7 @@ class ParallelAsyncTaskController<T, R> {
   }
 
   /// A Stream of results from the tasks.
-  Stream<ParallelAsyncTaskResultWrapper> get results =>
+  Stream<ParallelAsyncTaskResultWrapper<T,R>> get results =>
       _resultsController.stream;
 
   /// A Future that completes when all tasks have completed.
