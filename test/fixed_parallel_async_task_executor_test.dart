@@ -231,44 +231,61 @@ void main() {
         ]));
   });
 
-  test('future constructor', () async {
-    final Stopwatch stopwatch = Stopwatch()..start();
-    final taskController = ParallelAsyncTaskController<int, String>.future(
-      maxParallelTasks: 2,
-      items: Future.delayed(const Duration(seconds: 2),()=>List.generate(10, (index) => index)),
-      task: (int value) => Future.delayed(
-          Duration(milliseconds: value * 100), () => value.toString()),
-    );
-    expectLater(
-        taskController.results,
-        emitsInOrder([
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 0, result: '0'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 1, result: '1'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 2, result: '2'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 3, result: '3'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 4, result: '4'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 5, result: '5'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 6, result: '6'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 7, result: '7'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 8, result: '8'),
-          const ParallelAsyncTaskResultWrapper<int, String>(
-              task: 9, result: '9'),
-          emitsDone,
-        ]));
-    await taskController.allTasksComplete;
-    stopwatch.stop();
-    // 100ms for each task = 3.6 seconds
-    expect(stopwatch.elapsed.inMilliseconds, greaterThanOrEqualTo(3600));
-    // Adding a buffer of 2 seconds
-    expect(stopwatch.elapsed.inMilliseconds, lessThan(5700));
+  group('future constructor', () {
+    test('future constructor', () async {
+      final Stopwatch stopwatch = Stopwatch()..start();
+      final taskController = ParallelAsyncTaskController<int, String>.future(
+        maxParallelTasks: 2,
+        items: Future.delayed(const Duration(seconds: 2),
+            () => List.generate(10, (index) => index)),
+        task: (int value) => Future.delayed(
+            Duration(milliseconds: value * 100), () => value.toString()),
+      );
+      expectLater(
+          taskController.results,
+          emitsInOrder([
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 0, result: '0'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 1, result: '1'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 2, result: '2'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 3, result: '3'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 4, result: '4'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 5, result: '5'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 6, result: '6'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 7, result: '7'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 8, result: '8'),
+            const ParallelAsyncTaskResultWrapper<int, String>(
+                task: 9, result: '9'),
+            emitsDone,
+          ]));
+      await taskController.allTasksComplete;
+      stopwatch.stop();
+      // 100ms for each task = 3.6 seconds
+      expect(stopwatch.elapsed.inMilliseconds, greaterThanOrEqualTo(3600));
+      // Adding a buffer of 2 seconds
+      expect(stopwatch.elapsed.inMilliseconds, lessThan(5700));
+    });
+
+    test('future constructor error', () async {
+      final taskController = ParallelAsyncTaskController<int, String>.future(
+        maxParallelTasks: 2,
+        items: Future.error(Exception('Error')),
+        task: (int value) => Future.value(''),
+      );
+      expectLater(
+          taskController.results,
+          emitsInOrder([
+            emitsError(isException),
+            emitsDone,
+          ]));
+    });
   });
 }

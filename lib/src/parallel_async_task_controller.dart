@@ -45,6 +45,10 @@ class ParallelAsyncTaskController<T, R> {
     items.then((list) {
       _items.addAll(list);
       _startTasksIfPossible();
+    },
+        onError: (error, stackTrace) {
+      _resultsController.addError(error, stackTrace);
+      _close();
     });
   }
 
