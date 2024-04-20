@@ -47,8 +47,10 @@ class ParallelAsyncTaskController<T, R> {
       _startTasksIfPossible();
     },
         onError: (error, stackTrace) {
-      _resultsController.addError(error, stackTrace);
-      _close();
+          if (!_resultsController.isClosed) {
+            _resultsController.addError(error, stackTrace);
+            _close();
+          }
     });
   }
 
@@ -79,13 +81,13 @@ class ParallelAsyncTaskController<T, R> {
       }
       return;
     }
+    if (_resultsController.isClosed) return;
     _resultsController
         .add(ParallelAsyncTaskResultWrapper<T, R>(task: task, result: result));
     _startTasksIfPossible();
   }
 
   void _onTaskError(T task, Object error, StackTrace stackTrace) {
-    print("Error: $error");
     final exception = ParallelAsyncTaskException<T>(
         task: task, error: error, stackTrace: stackTrace);
     _runningTasks--;
@@ -99,6 +101,7 @@ class ParallelAsyncTaskController<T, R> {
       }
       return;
     }
+    if (_resultsController.isClosed) return;
     _resultsController.addError(exception, stackTrace);
     _startTasksIfPossible();
   }
@@ -115,6 +118,7 @@ class ParallelAsyncTaskController<T, R> {
   void resume() {
     _isPaused = false;
     if (_isCanceled) return;
+    if (_resultsController.isClosed) return;
     for (final result in _cachedResults) {
       _resultsController.add(result);
     }
